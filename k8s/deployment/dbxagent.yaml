@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbxagent
+  namespace: dbxplorer
+  labels:
+    app: dbxagent
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: dbxagent
+  template:
+    metadata:
+      labels:
+        app: dbxagent
+    spec:
+      securityContext:
+        fsGroup: 2000  # Ensure this matches the group your container runs as, or use a safe default
+      containers:
+      - name: dbxagent
+        image: itunified/dbxagent:dev
+        imagePullPolicy: Always
+        env:
+          - name: DD_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_API_KEY
+          - name: DD_APP_KEY
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_APP_KEY
+          - name: DD_URL
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_URL
+          - name: DD_PARALLEL
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_PARALLEL
+          - name: DD_UPLOAD
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_UPLOAD
+          - name: DD_AGENT_HOST
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_AGENT_HOST
+          - name: DD_TRACE_AGENT_PORT
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-env
+                key: DD_TRACE_AGENT_PORT
+          - name: CONFIG_REPO_USER
+            valueFrom:
+              secretKeyRef:
+                name: git-secret
+                key: CONFIG_REPO_USER
+          - name: CONFIG_REPO_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: git-secret
+                key: CONFIG_REPO_TOKEN
+          - name: AGENT_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: dbxplorer-license   # <-- This should match your license secret name
+                key: license.jwt          # <-- This should match the key in your secret
+          - name: DB_PASSWORD_KEY
+            valueFrom:
+              secretKeyRef:
+                name: dbxagent-dbkey
+                key: DB_PASSWORD_KEY
+          - name: METRICS_PATH
+            value: "/app/config-repo/monitoring/metrics/"
+          - name: INVENTORY_PATH
+            value: "/app/config-repo/inventory/"
+          - name: DD_INSTRUMENTATION_ENABLED
+            value: "false"
+          - name: DD_TRACE_OTEL_ENABLED
+            value: "true"
+          - name: OTEL_SERVICE_NAME
+            value: "dbxagent"
+          - name: DD_TRACE_DEBUG
+            value: "false"
+        volumeMounts:
+        - name: dbxagent-config
+          mountPath: /app/dbxplorer/agent/agent-config.yaml
+          subPath: agent-config.yaml
+          readOnly: true
+        - name: logback-config
+          mountPath: /app/dbxplorer/agent/logging.xml
+          subPath: logging.xml
+          readOnly: true
+        - name: config-repo
+          mountPath: /app/config-repo
+        - name: license-public-key
+          mountPath: /ec_public.pem
+          subPath: public_key.pem
+          readOnly: true
+      volumes:
+      - name: dbxagent-config
+        secret:
+          secretName: dbxagent-config
+      - name: logback-config
+        secret:
+          secretName: logback-config
+      - name: config-repo
+        emptyDir: {}
+      - name: license-public-key
+        secret:
+          secretName: dbxplorer-license   # <-- This should match your license secret name
+          items:
+            - key: public_key.pem
+              path: public_key.pem

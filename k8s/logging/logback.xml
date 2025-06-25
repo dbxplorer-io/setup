@@ -1,0 +1,80 @@
+<configuration>
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>logs/app.log</file>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+
+  <appender name="JSON_TCP" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>intake.logs.datadoghq.com:10516</destination>
+    <keepAliveDuration>20 seconds</keepAliveDuration>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <formatter class="net.logstash.logback.composite.loggingevent.DefaultJsonFormatter">
+        <jsonProviders>
+          <timestamp>
+            <fieldName>timestamp</fieldName>
+          </timestamp>
+          <version>
+            <fieldName>logger.version</fieldName>
+          </version>
+          <loggerName>
+            <fieldName>logger.name</fieldName>
+          </loggerName>
+          <threadName>
+            <fieldName>logger.thread_name</fieldName>
+          </threadName>
+          <logLevel>
+            <fieldName>status</fieldName>
+          </logLevel>
+          <message/>
+          <mdc/>
+          <arguments/>
+          <stackTrace/>
+          <uuid/>
+        </jsonProviders>
+      </formatter>
+      <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+          <pattern>${DD_API_KEY} %mdc{keyThatDoesNotExist}</pattern>
+        </layout>
+      </prefix>
+    </encoder>
+    <ssl />
+  </appender>
+
+  <!-- Log-Level für spezifische Klassen -->
+  <logger name="com.zaxxer.hikari" level="ERROR" />
+  <logger name="io.dbxplorer.agent.core.OracleDatabaseManager" level="DEBUG" />
+  <!-- Removed obsolete loggers for old Datadog classes -->
+  <logger name="io.dbxplorer.agent.Agent" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.utils.Utils" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.config.MetricsLoader" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.config.InventoryLoader" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.config.AgentConfig" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.YamlLoader" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.collectors.MetricCollectorFactory" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.LicenseMgmt" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.DatabaseManagerFactory" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.DatabaseManager" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.utils.GitRepoManager" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.datadog.DatadogEventService" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.datadog.DatadogIncidentService" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.datadog.DatadogUtils" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.core.datadog.DataDogMetricService" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.utils.SqlPlanTracer" level="DEBUG" />
+
+  <!-- Oracle-Metrikmodule -->
+  <logger name="io.dbxplorer.agent.metrics.oracle.Awr.Ash" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Awr.SqlStat" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Awr.SqlPlan" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.space.AsmDiskGroup" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Health.SysStat" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Availability.Availability" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Availability.Integration" level="INFO" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Session.SessionMonitor" level="DEBUG" />
+  <logger name="io.dbxplorer.agent.metrics.oracle.Health.InstanceViewer" level="DEBUG" />
+
+  <root level="INFO">
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="JSON_TCP" />
+  </root>
+</configuration>
