@@ -24,7 +24,7 @@ spec:
         fsGroup: 2000  # Ensure this matches the group your container runs as, or use a safe default
       containers:
       - name: dbxagent
-        image: itunified/dbxagent:dev
+        image: itunified/dbxagent:latest
         imagePullPolicy: Always
         env:
           - name: DD_API_KEY
